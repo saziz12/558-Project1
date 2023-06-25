@@ -12,5 +12,50 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction
 This document is an vignette to show how to interact with an API. I will demonstrate this by interacting with the Movie API and perform some exploratory data analysis (EDA) on the data extracted.  
+I will create a function that takes in the movie title provided by the user and, if the movie is present on the API, the function will return a data frame that includes the title of the movie, the year it was published in, its genre, plot, and IMDb rating.  
 
 ## Required Packages
+To use the function for interacting with the Movie API, I used the following packages:  
+* `httr`: to make HTTP requests  
+* `jsonlite`: to read JSON data and convert and simplify to an R object  
+
+In addition to those packages, I used the following packages in the EDA portion:  
+* `dplyr`: to manipulate and summarize data  
+* `ggplot2`: to visualize data  
+
+```{r 1}
+#loading the necessary libraries
+library(httr)
+library(jsonlite)
+library(dplyr)
+library(ggplot2)
+```
+
+After loading the required libraries, I will create the function to call the Movie API:  
+```{r 2}
+get_movie_data <- function(title, plot = "short") {
+  base_url <- "http://www.omdbapi.com/"
+  query_params <- list(
+    apikey = "335677ef",
+    t = title,
+    plot = plot
+  )
+  
+  response <- GET(url = base_url, query = query_params)
+  data <- content(response, "text") %>%
+    fromJSON()
+  
+  if (data$Response == "True") {
+    df <- data.frame(
+      Title = data$Title,
+      Year = as.integer(data$Year),
+      Genre = data$Genre,
+      Plot = data$Plot,
+      IMDb_Rating = as.numeric(data$imdbRating)
+    )
+    return(df)
+  } else {
+    stop("Error: Movie not found.")
+  }
+}
+```
