@@ -1,0 +1,16 @@
+---
+title: "Interacting with APIs"
+author: "Sandra Aziz"
+output: 
+  github_document:
+      toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+This document is an vignette to show how to interact with an API. I will demonstrate this by interacting with the Movie API and perform some exploratory data analysis (EDA) on the data extracted.  
+
+## Required Packages
