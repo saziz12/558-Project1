@@ -110,7 +110,7 @@ bar_plot
 ```
 From this bar plot, we can see that the movies in 'Crime, Drama', 'Action, Crime, Drama' and 'Biography, Drama' genres from our list have higher IMDb Rating than the movies in the other genres. It would be interesting to know if this is a trend throughout these genres or just in the movies that were picked.   
 
-```{r 6}
+```{r 7}
 hist_plot <- ggplot(movies, aes(x = IMDb_Rating, fill = Genre)) +
   geom_histogram(binwidth = 0.25) +
   labs(title = "Distribution of Movie Ratings", x = "IMDb Rating", y = "Count")
@@ -118,22 +118,33 @@ hist_plot
 ```
 We can tell that the IMDb Rating for the 2 movies in the 'Action, Adventure, Sci-Fi' genre are closely related. This makes me curious if these results are rare or if all the movies in this genre would most likely fall around the same IMDb rating.
 
-
-```{r 7}
+```{r 8}
 box_plot <- ggplot(movies, aes(x = Genre, y = IMDb_Rating, fill = Genre)) +
   geom_boxplot() +
   labs(title = "Boxplot of IMDb Ratings by Genre", x = "Genre", y = "IMDb Rating") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 box_plot
 ```
+This boxplot visualizes summary table discussed early. Similarly, we can see the three genres with one movie each that have no variation compare to the other two. We can also see how closely the IMDb Rating is for the two movies in the 'Action, Adventure, Sci-Fi' compared to the 'Crime, Drama' genre as discussed in the histogram above.  
 
-
-```{r 8}
+```{r 9}
 scatter_plot <- ggplot(movies, aes(x = IMDb_Rating, y = Metascore, color = Genre)) +
   geom_point() +
-  labs(title = "IMDb Ratings vs. Metascores", x = "IMDb Rating", y = "Metascore")
+  labs(title = "IMDb Ratings vs. Metascores", x = "IMDb Rating", y = "Metascore") 
 scatter_plot
 ```
+If we exclude the 'Crime, Drama' genre, we would be able to see a clear trend 
 
+```{r 10}
+genre_ratings <- aggregate(IMDb_Rating ~ Genre, data = movies, FUN = mean)
+bar_plot2 <- ggplot(genre_ratings, aes(x = Genre, y = IMDb_Rating, fill = Genre)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Average IMDb Ratings by Genre", x = "Genre", y = "Average IMDb Rating") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+bar_plot2
+```
+The plot above shows the average IMDb_Rating for each genre. These numbers can also be found in the numerical summaries discussed above.  
 
-
+# Wrap-Up
+So far, to summarize everything above, I created a function that interacts with the Movie API and takes in the title of the movie, series, or episode, and outputs relevant information about them. Then, I created some categorical, numerical, and graphical summaries that explored more about the movies I picked. All the summaries seemed to agree with each other, which is good to achieve! I am interested in looking into this more by extracting titles of different types and doing some cross analysis at a later time! I hope this has helped you interact with APIs!
+```
