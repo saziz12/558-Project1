@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 This document is an vignette to show how to interact with an API. I will demonstrate this by interacting with the Movie API and perform some exploratory data analysis (EDA) on the data extracted.  
 I will create a function that takes in four arguments: the movie title, the release year (defaults to NULL), the plot (defaults to "short"), and the endpoint (defaults to "movie"), and, if the movie is present on the API, the function will return a data frame that includes the title of the movie, the year it was released in, its genre, plot, and IMDb rating.  
 
-## Required Packages
+# Required Packages
 To use the function for interacting with the Movie API, I used the following packages:  
 * `httr`: to make HTTP requests  
 * `jsonlite`: to read JSON data and convert and simplify to an R object  
@@ -31,7 +31,7 @@ library(dplyr)
 library(ggplot2)
 ```
 
-## API Interaction Function
+# API Interaction Function
 After loading the required libraries, I will create the function to call the Movie API:  
 ```{r 2}
 get_movie_data <- function(title, year = NULL, plot = "short", endpoint = "movie") {
@@ -49,9 +49,12 @@ get_movie_data <- function(title, year = NULL, plot = "short", endpoint = "movie
   if (data$Response == "True") {
      df <- data.frame(
       Title = data$Title,
+      Type = data$Type,
+      Run_Time = as.numeric(gsub(" min", "", data$Runtime)),
       Year = as.integer(data$Year),
-      Box_Office = as.numeric(gsub('[$,]', '', data$BoxOffice)),
+      Box_Office = as.numeric(gsub("[$,]", "", data$BoxOffice)),
       Genre = data$Genre,
+      Metascore = data$Metascore,
       IMDb_Rating = as.numeric(data$imdbRating)
     )
     return(df)
@@ -61,25 +64,76 @@ get_movie_data <- function(title, year = NULL, plot = "short", endpoint = "movie
 }
 ```
 
-## Data Exploration
+# Data Exploration
 Now that we can interact with a few API endpoints, let's do some data exploration and analysis!  
-```{r 3}
-A <- get_movie_data("John Wick")
-B <- get_movie_data("John Wick: Chapter 2")
-C <- get_movie_data("John Wick: Chapter 3")
-D <- get_movie_data("John Wick: Chapter 4")
+First, I will feed the function the titles for popular movies from different decades to get information about them , combine the information into one table, then do some analysis on them.  
 
-movies <- rbind(A, B, C, D)
+```{r 3}
+A <- get_movie_data("The Godfather")
+B <- get_movie_data("Scarface")
+C <- get_movie_data("The Dark Knight")
+D <- get_movie_data("The Social Network")
+E <- get_movie_data("The Amazing Spider-Man")
+G <- get_movie_data("The Hunger Games")
+H <- get_movie_data("White House Down")
+
+movies <- rbind(A, B, C, D, E, G, H)
 
 # Create a new variable "Decade" based on the release year
 movies$Decade <- floor(movies$Year / 10) * 10
 
 movies
-
 ```
+
+Now, I will creating a contingency table of movie genres:  
 ```{r 4}
-# Create a new variable "Decade" based on the release year
-movies$Decade <- floor(movies$Year / 10) * 10
-
-
+genre_table <- table(movies$Genre)
+genre_table
 ```
+
+From the table above, we can tell that 2 out of the 7 movies selected are considered part of the crime and drama categories. However, if we break the genres into their separate categories, 5 out of 7 movies would be considered drama and 3 out of the 7 would be considered crime.  
+
+Next, I will create numerical summaries of rating at each category of genre:
+```{r 5}
+genre_summaries <- aggregate(movies$IMDb_Rating, by = list(movies$Genre), FUN = summary)
+genre_summaries
+```
+The summaries above show the spread of the IMDb_Rating variable across the different genres. Of course, there isn't any variation for the second, third, and fourth groups of genres since they only include one movie each from our list. The IMDb_Rating for first group ranges from 6.9 to 7.2 and for the last group from 8.3 to 9.2 for the two movies in teach of hese categories. Of course the more movies in each categories, the more variation we expect to see in their IMDb_Rating.  
+
+Next, I will create some plots so we can visualize this better:
+```{r 6}
+bar_plot <- ggplot(movies, aes(x = Title, y = IMDb_Rating, fill = Genre)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Movie Ratings by Genre", x = "Movie Title", y = "IMDb Rating") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+bar_plot
+```
+From this bar plot, we can see that the movies in 'Crime, Drama', 'Action, Crime, Drama' and 'Biography, Drama' genres from our list have higher IMDb Rating than the movies in the other genres. It would be interesting to know if this is a trend throughout these genres or just in the movies that were picked.   
+
+```{r 6}
+hist_plot <- ggplot(movies, aes(x = IMDb_Rating, fill = Genre)) +
+  geom_histogram(binwidth = 0.25) +
+  labs(title = "Distribution of Movie Ratings", x = "IMDb Rating", y = "Count")
+hist_plot
+```
+We can tell that the IMDb Rating for the 2 movies in the 'Action, Adventure, Sci-Fi' genre are closely related. This makes me curious if these results are rare or if all the movies in this genre would most likely fall around the same IMDb rating.
+
+
+```{r 7}
+box_plot <- ggplot(movies, aes(x = Genre, y = IMDb_Rating, fill = Genre)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of IMDb Ratings by Genre", x = "Genre", y = "IMDb Rating") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+box_plot
+```
+
+
+```{r 8}
+scatter_plot <- ggplot(movies, aes(x = IMDb_Rating, y = Metascore, color = Genre)) +
+  geom_point() +
+  labs(title = "IMDb Ratings vs. Metascores", x = "IMDb Rating", y = "Metascore")
+scatter_plot
+```
+
+
+
